@@ -31,6 +31,8 @@
 
 Actualmente la administrcón de listas deprecios se divide en 2 grandes grupos, las listas de precio generales (bases y dependientes) y las listas de precios personalizadas. Existen varios tipos de listas personalizadas las cuales son:
 
+| Listas de Precio R1 |
+| --- |
 | Lista de Precios Especial Cliente |
 | Lista de Precios Especial Autoservicio |
 | Lista de Precios Especial Exportación |
@@ -48,9 +50,9 @@ Relacion de Claves de Prodcutos y Tipos de listas
 
 | Tipo de Lista | Tipo de Claves de Producto |
 | --- | --- |
-| Lista de Precios Especial Cliente | - |
-| Lista de Precios Especial Autoservicio | - |
-| Lista de Precios Especial Exportación | - |
+| Lista de Precios Especial Cliente | Clave Comercial, Clave Especial Cliente |
+| Lista de Precios Especial Autoservicio | Clave Autoservicio |
+| Lista de Precios Especial Exportación | Clave Exportacion, Clave Especial Cliente |
 
 
 ## C.1 Conceptos base
