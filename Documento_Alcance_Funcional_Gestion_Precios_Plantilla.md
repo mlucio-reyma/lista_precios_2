@@ -44,7 +44,26 @@ Primero se configuran los elementos comerciales que definen el precio: claves de
 
 Ventas genera y revisa los precios resultantes y los valida. Después los lleva por el flujo de aprobación: Dirección, Cliente y autorización final. Solo entonces se consideran vigentes para la operación comercial. Una vez autorizados, quedan disponibles en el sistema mediante listas de precios detalladas.
 
-Estatus de una lista: nace como *Capturada* y avanza en este orden: *Pendiente Aprobar Dirección → Pendiente Aprobar Cliente → Pendiente Autorizar → Autorizada*. También existen los estatus *Cancelada* y *No Autorizada*. Una lista puede pasar a *Cancelada* en cualquier etapa del proceso, y la cancelación la realiza el Ejecutivo de Cuenta. Puede pasar a *No Autorizada* únicamente cuando está en *Pendiente Aprobar Dirección* o *Pendiente Aprobar Cliente*, y esa acción la realizan los gerentes. Una lista *Autorizada* no puede pasar a *No Autorizada*.
+Estatus de una lista: nace como *Capturada* y avanza en este orden: *Pendiente Aprobar Dirección → Aprobada Dirección → Pendiente Aprobar Cliente → Aprobada Cliente → Autorizada*. *Autorizada* es el único estatus final. También existen los estatus *Cancelada* y *No Autorizada*, que pueden reactivarse a *Capturada*.
+
+La lista se envía a Dirección y al Cliente por correo, fuera del sistema. Al recibir la respuesta, un Autorizador la registra en el sistema: aprobación, aprobación con cambios o no autorización.
+
+Transiciones permitidas:
+
+| De | A | Quién |
+|:--|:--|:--|
+| *Capturada* | *Pendiente Aprobar Dirección* | Gestor de Listas |
+| *Pendiente Aprobar Dirección* | *Aprobada Dirección* | Autorizador |
+| *Aprobada Dirección* | *Pendiente Aprobar Cliente* | Gestor de Listas |
+| *Pendiente Aprobar Cliente* | *Aprobada Cliente* | Autorizador |
+| *Aprobada Cliente* | *Autorizada* | Usuario con permiso especial de autorización final |
+| *Pendiente Aprobar Dirección*, *Pendiente Aprobar Cliente* (aprobación con cambios) | *Capturada* | Autorizador |
+| *Pendiente Aprobar Dirección*, *Pendiente Aprobar Cliente* | *No Autorizada* | Autorizador |
+| *Aprobada Cliente* | *No Autorizada* | Usuario con permiso especial de autorización final |
+| Cualquier estatus, excepto *Autorizada* | *Cancelada* | Gestor de Listas |
+| *Cancelada*, *No Autorizada* | *Capturada* | Gestor de Listas |
+
+Cuando una lista regresa a *Capturada*, ya sea por aprobación con cambios o por reactivación, el Gestor de Listas la corrige y el proceso reinicia desde Dirección; las aprobaciones anteriores dejan de ser válidas. Cada cambio de estatus queda registrado en una bitácora (RN-015).
 
 Actualmente la administración de listas de precios se divide en 2 grandes grupos: las listas de precios generales (bases y dependientes) y las listas de precios personalizadas. Existen varios tipos de listas personalizadas, las cuales son:
 
@@ -97,7 +116,7 @@ Relación de claves de producto y tipos de listas:
 |:----|:----|:----|:----|
 | **ID** | **Nombre del Requerimiento** | **Descripción Funcional** | **Tipo (Story/Feature)** |
 | RF-01 | Configuración de claves de producto del cliente | Relación entre las claves especiales (cliente, autoservicio, exportación) y la clave comercial. Una clave comercial puede tener varias claves especiales, y la relación se comparte entre clientes. Las claves especiales sin clave comercial son válidas y su precio inicial se captura a mano. Las cargas desde Excel incorporan un campo nuevo para la clave comercial. | Product Backlog |
-| RF-02 | Configuración de listas de precios | Captura de listas en la pantalla Lista de Precios Personalizada (identificador, estatus, nombre, vigencia, tipo de lista, lista de referencia, lista base (a nivel general o por clave), clientes, observaciones y detalle de claves). El tipo de lista limita las claves y las listas de referencia que se pueden usar. Permite crear nuevas versiones de una lista existente. | Product Backlog |
+| RF-02 | Configuración de listas de precios | Captura de listas en la pantalla Lista de Precios Personalizada (identificador, estatus, nombre, vigencia, tipo de lista, lista de referencia, lista base (a nivel general o por clave), clientes, observaciones, detalle de claves y sucursal). La sucursal se asigna automáticamente con la del usuario que crea la lista. El tipo de lista limita las claves y las listas de referencia que se pueden usar. Permite crear nuevas versiones de una lista existente. | Product Backlog |
 | RF-03 | Definición del precio de referencia | El precio inicial viene de la lista base (A o B) vigente, de una lista base histórica o de captura manual (claves especiales sin clave comercial). Puede definirse a nivel general (aplica a toda la lista) o a nivel clave, y ambas formas pueden aplicarse en una misma lista. La clasificación de lista base (A o B) permitida para cada clave comercial viene del catálogo de claves. | Product Backlog |
 | RF-04 | Determinación de proporcionalidad | Cuando la presentación de la clave del cliente difiere de la comercial, el precio base se ajusta con una fórmula parametrizable (v1 / v2) * v3. Los valores los captura el usuario y el resultado se redondea a 2 decimales. | Product Backlog |
 | RF-05 | Aplicación de descuentos y sobreprecios | Aplicación de descuentos y sobreprecios como importe, porcentaje o importe relacionado con el cubicaje. | Product Backlog |
@@ -105,11 +124,11 @@ Relación de claves de producto y tipos de listas:
 | RF-07 | Cálculo de precios de exportación | Desglose del IVA y conversión a dólares con el tipo de cambio definido. Muestra el precio en pesos, el tipo de cambio y el precio en dólares. | Product Backlog |
 | RF-08 | Generación de precios preliminares | Generación de la lista preliminar con estatus *Capturada* y avance por el flujo de estatus. La lista se ve en el cuadrante del Monitor que corresponde a su estatus. | Product Backlog |
 | RF-09 | Consulta y revisión de precios calculados | Consulta del detalle del cálculo: cliente, producto, precio de referencia, condiciones aplicadas y precio resultante. | Product Backlog |
-| RF-10 | Validación y aprobación de precios | Aprobación de la lista por el flujo Dirección, Cliente y autorización final, sin saltar pasos. Se registra quién aprobó y cuándo. Los gerentes pueden pasar la lista a *No Autorizada* en los pasos de Dirección y Cliente, y el Ejecutivo de Cuenta puede cancelarla en cualquier etapa. | Product Backlog |
+| RF-10 | Validación y aprobación de precios | Aprobación de la lista por el flujo Dirección, Cliente y autorización final, sin saltar pasos. Se registra quién aprobó y cuándo. Los Autorizadores registran la respuesta de Dirección y del Cliente (aprobación, aprobación con cambios o no autorización), y la autorización final requiere el permiso especial (RN-014). Los Gestores de Listas envían la lista a cada paso, la cancelan antes de *Autorizada* y reactivan las listas *Cancelada* o *No Autorizada*. Transiciones según la sección 2.4. | Product Backlog |
 | RF-11 | Generación de lista de precios autorizada | Generación o actualización de la lista autorizada. Permite recapturar y foncfirmar la fecha de inicio de vigencia, distinta a la de aprobación, y registrar el fin de vigencia. | Product Backlog |
-| RF-12 | Control de modificaciones | Registro de las modificaciones a la información que determina los precios: qué se cambió, quién y cuándo. | Product Backlog |
+| RF-12 | Control de modificaciones | Registro de las modificaciones a la información que determina los precios: qué se cambió, quién y cuándo. Incluye la bitácora de cambios de estatus de las listas (RN-015). | Product Backlog |
 | RF-13 | Validaciones del proceso | Validación de la información requerida antes del cálculo. Si falta algo, el sistema lo indica y no calcula. | Product Backlog |
-| RF-14 | Control de acceso | Acciones permitidas según el perfil y los permisos del usuario. | Product Backlog |
+| RF-14 | Control de acceso | Acciones y listas visibles según el grupo del usuario (Gestores de Listas o Autorizadores), su sucursal y sus permisos especiales, conforme a RN-012, RN-013 y RN-014. | Product Backlog |
 | RF-15 | Historial de precios | Consulta de precios anteriores, sus vigencias y la información asociada. Un precio histórico puede usarse como referencia. | Product Backlog |
 
 # Requerimientos No Funcionales (si aplica)
@@ -133,11 +152,15 @@ Relación de claves de producto y tipos de listas:
 | RN-004 | Al precio ya ajustado se le aplican los descuentos y sobreprecios establecidos, como importe, porcentaje o importe relacionado con el cubicaje. |
 | RN-005 | El precio de venta resulta de aplicar la proporcionalidad, los descuentos y los sobreprecios que correspondan a cada clave y cliente. |
 | RN-006 | En exportación, el precio considera el desglose del IVA y después se convierte a dólares con el tipo de cambio definido. |
-| RN-007 | Los precios calculados los revisa Ventas y avanzan por el flujo de estatus (Dirección, Cliente y autorización) antes de ser autorizados. **[a validar: responsable de cada paso]** |
+| RN-007 | Los precios calculados los revisa Ventas y avanzan por el flujo de estatus (Dirección, Cliente y autorización) antes de ser autorizados. Los Autorizadores aprueban los pasos de Dirección y Cliente; la autorización final la realiza quien tenga el permiso especial (RN-014). |
 | RN-008 | Una vez aprobados los precios, se genera la lista de precios con los precios autorizados. |
 | RN-009 | El tipo de lista (Especial Cliente, Autoservicio o Exportación) limita las claves que se pueden agregar: cada tipo usa su clase de clave. También limita las listas de referencia, que deben ser del mismo tipo **[a validar]**. |
-| RN-010 | Toda lista nace como *Capturada* y avanza en este orden: Pendiente Aprobar Dirección, Pendiente Aprobar Cliente, Pendiente Autorizar y Autorizada. Al llegar a *Autorizada* sale de los cuadrantes del Monitor. En cualquier etapa del proceso, el Ejecutivo de Cuenta puede cambiar la lista a *Cancelada*. Cuando la lista está en *Pendiente Aprobar Dirección* o *Pendiente Aprobar Cliente*, los gerentes pueden pasarla a *No Autorizada*. Una lista *Autorizada* no puede pasar a *No Autorizada*. Las listas *Cancelada* y *No Autorizada* también salen de los cuadrantes del Monitor y se consultan en su pestaña. |
+| RN-010 | Toda lista nace como *Capturada* y avanza en este orden: *Pendiente Aprobar Dirección*, *Aprobada Dirección*, *Pendiente Aprobar Cliente*, *Aprobada Cliente* y *Autorizada*, sin saltar pasos. Solo se permiten las transiciones de la sección 2.4. La lista solo puede modificarse en *Capturada*. *Autorizada* es el único estatus final: no puede pasar a *No Autorizada* ni a *Cancelada*, ni reactivarse; para cambiarla se crea una nueva versión (RF-02). Las listas *Autorizada*, *Cancelada* y *No Autorizada* salen de los cuadrantes del Monitor y se consultan en su pestaña. Al reactivarse, una lista *Cancelada* o *No Autorizada* regresa al cuadrante de *Capturada*. |
 | RN-011 | En el catálogo de claves se define, para cada clave comercial, la clasificación de lista base (A o B) en la que puede utilizarse. La A es para material termoespumado y la B para el resto. Al configurar la lista de precios, la lista base se aplica a nivel general o a nivel clave (ver RF-03), dentro de la clasificación que el catálogo permite a cada clave. |
+| RN-012 | El acceso a las listas personalizadas se controla con dos grupos. **Gestores de Listas**: Ejecutivos de Ventas (también llamados Ejecutivos de Cuenta); capturan y modifican listas, las envían a Dirección y al Cliente, las cancelan y reactivan las listas *Cancelada* o *No Autorizada*. **Autorizadores**: Gerentes de Ventas, Gerentes Comerciales y Enlaces de Ventas; registran a nombre de Dirección y del Cliente la aprobación, la aprobación con cambios o la no autorización. Cualquier Autorizador puede pasar una lista a *No Autorizada*. |
+| RN-013 | Los Autorizadores ven todas las listas personalizadas. Los Gestores de Listas ven solo las listas de su sucursal. La sucursal de la lista es la del usuario que la crea. La regla aplica al Monitor, a la consulta de listas y al historial. |
+| RN-014 | El paso de *Aprobada Cliente* a *Autorizada* requiere el permiso especial **Autorizar Lista de Precios Personalizada**, que se asigna a una o varias personas en específico, sin importar su grupo. Quien tiene el permiso también puede pasar la lista de *Aprobada Cliente* a *No Autorizada*. El permiso no amplía la visibilidad: cada usuario solo puede autorizar las listas que puede ver según RN-013. Un Autorizador con el permiso puede autorizar listas de cualquier sucursal; un Gestor de Listas con el permiso, solo las de su sucursal. No hay restricción de separación de funciones: una misma persona puede registrar varias aprobaciones de una lista y dar su autorización final. |
+| RN-015 | Cada cambio de estatus de una lista se registra en una bitácora con fecha, usuario, estatus anterior, estatus nuevo y un comentario o motivo opcional. La bitácora conserva todos los ciclos de la lista, incluidas las reactivaciones. |
 
 **Nota: - Estas reglas pueden trasladarse como Criterios de Aceptación en los product backlogs / historias de usuario en Azure DevOps.**
 
@@ -153,7 +176,7 @@ Responsable de validación: ( ) Cliente (x) Product Owner (x) Área de Negocio
 
 ## RF-02 Configuración de listas de precios
 
-Dado que: el usuario autorizado configura una lista en la pantalla Lista de Precios Personalizada. Cuando: elige el tipo de lista. Entonces: el sistema ofrece solo las claves y listas de referencia de ese tipo. Si cambia el tipo con claves ya agregadas, avisa y las limpia. Muestra el cliente de referencia y el listado de clientes de la lista. La casilla de lista de referencia se activa solo cuando la lista es nueva versión de una existente. Si falta algún campo obligatorio, indica cuál **[a validar]**.
+Dado que: el usuario autorizado configura una lista en la pantalla Lista de Precios Personalizada. Cuando: elige el tipo de lista. Entonces: el sistema ofrece solo las claves y listas de referencia de ese tipo. Si cambia el tipo con claves ya agregadas, avisa y las limpia. Muestra el cliente de referencia y el listado de clientes de la lista. Al crearla, asigna la sucursal del usuario que la crea. La casilla de lista de referencia se activa solo cuando la lista es nueva versión de una existente. Si falta algún campo obligatorio, indica cuál **[a validar]**.
 
 Responsable de validación: ( ) Cliente (x) Product Owner (x) Área de Negocio
 
@@ -201,7 +224,13 @@ Responsable de validación: ( ) Cliente (x) Product Owner (x) Área de Negocio
 
 ## RF-10 Validación y aprobación de precios
 
-Dado que: una lista está pendiente de revisión. Cuando: un usuario autorizado la aprueba en cada paso (Dirección, Cliente y autorización final). Entonces: el sistema avanza su estatus hasta *Autorizada*. No permite saltar pasos, no considera autorizada una lista sin aprobar y registra quién aprobó y cuándo. Si la lista está en *Pendiente Aprobar Dirección* o *Pendiente Aprobar Cliente*, el sistema permite a los gerentes pasarla a *No Autorizada*; en otras etapas, incluida *Autorizada*, no ofrece esa opción, y a otros perfiles tampoco. En cualquier etapa, el Ejecutivo de Cuenta puede cancelarla (*Cancelada*). Se registra quién cambió el estatus y cuándo.
+Dado que: una lista está en proceso de aprobación. Cuando: el Gestor de Listas la envía a cada paso, un Autorizador registra la aprobación de Dirección y del Cliente, y un usuario con el permiso especial da la autorización final. Entonces: el sistema avanza su estatus hasta *Autorizada*. Solo permite las transiciones de la sección 2.4 y no permite saltar pasos.
+
+* Si un Autorizador registra una aprobación con cambios, la lista regresa a *Capturada* y el proceso reinicia desde Dirección.
+* En *Pendiente Aprobar Dirección* o *Pendiente Aprobar Cliente*, cualquier Autorizador puede pasarla a *No Autorizada*. En *Aprobada Cliente*, solo quien tiene el permiso especial. En *Capturada*, *Aprobada Dirección* y *Autorizada* no se ofrece esa opción.
+* Sin el permiso especial, el sistema no ofrece la autorización final, aunque el usuario sea Autorizador.
+* El Gestor de Listas puede cancelar la lista en cualquier estatus excepto *Autorizada*, y reactivar a *Capturada* una lista *Cancelada* o *No Autorizada*.
+* Cada cambio de estatus queda en la bitácora con fecha, usuario, estatus anterior, estatus nuevo y comentario opcional (RN-015).
 
 Responsable de validación: ( ) Cliente (x) Product Owner (x) Área de Negocio
 
@@ -225,7 +254,22 @@ Responsable de validación: ( ) Cliente (x) Product Owner ( ) Área de Negocio
 
 ## RF-14 Control de acceso
 
-Dado que: el usuario tiene un perfil y permisos determinados. Cuando: entra al módulo de gestión de precios. Entonces: el sistema muestra solo las acciones autorizadas para su perfil e impide modificar o aprobar precios a quien no tiene permiso.
+Dado que: el usuario tiene un perfil y permisos determinados. Cuando: entra al módulo de gestión de precios. Entonces: el sistema muestra solo las acciones autorizadas para su perfil e impide modificar o aprobar precios a quien no tiene permiso. Un Gestor de Listas no ve ni puede abrir listas de otra sucursal. Un usuario sin el permiso especial no puede dar la autorización final.
+
+Matriz de permisos:
+
+| Acción | Gestores de Listas | Autorizadores |
+|:--|:--:|:--:|
+| Ver listas | Solo su sucursal | Todas |
+| Crear / modificar lista (solo en *Capturada*) | ✔ | ✖ **[a validar]** |
+| Enviar a Dirección (*Capturada* → *Pendiente Aprobar Dirección*) | ✔ | ✖ |
+| Enviar al Cliente (*Aprobada Dirección* → *Pendiente Aprobar Cliente*) | ✔ | ✖ |
+| Registrar aprobación de Dirección y del Cliente | ✖ | ✔ |
+| Registrar aprobación con cambios (→ *Capturada*) | ✖ | ✔ |
+| Marcar *No Autorizada* en *Pendiente Aprobar Dirección* o *Pendiente Aprobar Cliente* | ✖ | ✔ |
+| Autorización final o *No Autorizada* desde *Aprobada Cliente* | Solo con permiso especial (su sucursal) | Solo con permiso especial |
+| Cancelar (excepto *Autorizada*) | ✔ | ✖ **[a validar]** |
+| Reactivar (*Cancelada* o *No Autorizada* → *Capturada*) | ✔ | ✖ |
 
 Responsable de validación: ( ) Cliente (x) Product Owner ( ) Área de Negocio
 
@@ -239,7 +283,8 @@ Responsable de validación: ( ) Cliente (x) Product Owner ( ) Área de Negocio
 
 * Dependencias de negocio/proceso:
   * Ventas proporciona y valida las condiciones comerciales, reglas de cálculo, productos y relaciones entre claves.
-  * Ventas revisa los precios calculados y los aprueban los usuarios definidos para el proceso.
+  * Ventas revisa los precios calculados; los aprueban los Autorizadores y los autoriza quien tenga el permiso especial (RN-014).
+  * Cada sucursal debe tener al menos una persona con el permiso de autorización final que pueda ver sus listas. Si no la hay, sus listas se quedan detenidas en *Aprobada Cliente*.
   * El área responsable define las fechas de inicio y fin de vigencia de las listas.
   * Las listas con vigencia terminada se conservan como historial y no se eliminan.
 * Información de entrada requerida:
@@ -263,7 +308,7 @@ Responsable de validación: ( ) Cliente (x) Product Owner ( ) Área de Negocio
 Para las mejoras evolutivas, indicar además los
 
 * Sistemas y procesos impactados: R1, en el proceso de determinación y gestión de precios que hoy se hace en Excel.
-* Grupos de usuarios afectados: Gerentes de Ventas (configuración de condiciones, generación, revisión y gestión de listas) y Enlaces de Ventas (revisión y aprobación de precios).
+* Grupos de usuarios afectados: Gestores de Listas (Ejecutivos de Ventas: captura, modificación y cancelación de listas) y Autorizadores (Gerentes de Ventas, Gerentes Comerciales y Enlaces de Ventas: revisión y aprobación de listas), además de los usuarios con el permiso especial de autorización final.
 * Riesgos operativos asociados:
   * Información o condiciones comerciales incorrectas o incompletas que den un cálculo erróneo.
   * Fechas de vigencia mal definidas, que causen precios aplicados fuera del periodo autorizado.
@@ -283,7 +328,7 @@ Para las mejoras evolutivas, indicar además los
 | Pantalla 1. Lista de Precios Personalizada | Permite configurar nombre, tipo de lista, vigencia, lista base del precio, lista detallada a la que se aplicará y claves de producto del cliente. Muestra la relación entre la clave del cliente y la clave comercial equivalente, el precio base referenciado y el precio determinado al cliente según las operaciones del cálculo. | [Imagen/Link] |
 | Pantalla 2. Agregar operaciones | Permite elegir cómo se aplican los descuentos y sobreprecios a las claves del cliente. Muestra el orden de aplicación capturado por el usuario autorizado. | [Imagen/Link] |
 | Pantalla 3. Operaciones | Muestra los cálculos hechos por el sistema con los parámetros configurados en la pantalla anterior. | [Imagen/Link] |
-| Pantalla 4. Monitor de Lista de Precios Personalizadas | Pantalla principal de seguimiento del ciclo de vida de las listas, dividida en cuadrantes por estatus. Desde ahí se llama a la pantalla Lista de Precios Personalizada para agregar o modificar listas, y se autorizan o cancelan. Incluirá una pestaña para las listas Autorizada, Cancelada y No Autorizada (sin wireframe todavía). | [Imagen pendiente] |
+| Pantalla 4. Monitor de Lista de Precios Personalizadas | Pantalla principal de seguimiento del ciclo de vida de las listas, dividida en 5 cuadrantes por estatus: *Capturada*, *Pendiente Aprobar Dirección*, *Aprobada Dirección*, *Pendiente Aprobar Cliente* y *Aprobada Cliente*. Los cuadrantes muestran solo las listas que el usuario puede ver según su grupo y sucursal (RN-013). Desde ahí se llama a la pantalla Lista de Precios Personalizada para agregar o modificar listas, y se ejecutan los cambios de estatus permitidos (sección 2.4). Incluirá una pestaña para las listas *Autorizada*, *Cancelada* y *No Autorizada*, desde la que se reactivan las canceladas y no autorizadas (sin wireframe todavía). | [Imagen pendiente] |
 
 # Impacto Organizacional y Requerimientos de Capacitación
 
@@ -293,9 +338,9 @@ Para las mejoras evolutivas, indicar además los
 
 | **Área** | **Rol** | **Tipo de Usuario** | **Capacitación Requerida** |
 |:-----|:----|:----------------|:-----------------------|
-| Ventas | Ejecutivo de Ventas | Operativo       | Sí                     |
-| Ventas | Gerente Comercial | Aprobador       | Sí                     |
-| Auditoría de Ventas | Auditor | Administrador   | Sí                     |
+| Ventas | Gestores de Listas (Ejecutivos de Ventas) | Operativo | Sí |
+| Ventas | Autorizadores (Gerentes de Ventas, Gerentes Comerciales y Enlaces de Ventas) | Aprobador | Sí |
+| Ventas | Usuarios con permiso especial de autorización final | Autorizador final | Sí |
 
 ## 11.2. Componentes funcionales que requieren material de capacitación
 
@@ -312,7 +357,7 @@ Para las mejoras evolutivas, indicar además los
 |     |     |     |
 |:----|:----|:----|
 | Tipo | Descripción | Mitigación |
-| Operativo |     |     |
+| Operativo | Las respuestas de Dirección y del Cliente se registran sin evidencia adjunta y sin separación de funciones: una misma persona puede registrar todas las aprobaciones de una lista y dar su autorización final. | Decisión aceptada por el negocio. La bitácora de estatus (RN-015) permite rastrear quién registró cada paso; se recomienda usar el comentario para indicar el origen de la respuesta. |
 | Técnico |     |     |
 | Negocio |     |     |
 
